@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <title>Real Time Chat</title>
+        <meta charset=utf-8>
+        <link rel="stylesheet" href="/styles.css">
+        <script src="/socket.io.js"></script>
+    </head>
+    <body>
+        <form id="chat">
+            <input type="text" name="username" placeholder="Digite seu usuário">
+            <div class="messages"></div>
+            <input type="text" name="message" placeholder="Digite sua mensagem">
+            <button type="submit">Enviar</button>
+        </form>
+
+        <script>
+            const socket = io('http://localhost:3000')
+            const form = document.querySelector('form')
+
+            function renderMessage(message) {
+                const messageContainer = document.createElement('div')
+                const authorContainer = document.createElement('strong')
+                const authorText = document.createTextNode(`${message.author}: `)
+                const messageText = document.createTextNode(message.message)
+
+                authorContainer.appendChild(authorText)
+
+                messageContainer.classList.add('message')
+                messageContainer.appendChild(authorContainer)
+                messageContainer.appendChild(messageText)
+
+                document.querySelector('.messages').appendChild(messageContainer)
+            }
+
+            socket.on('previousMessages', messages => {
+                for(message of messages) {
+                    renderMessage(message)
+                }
+            })
+
+            socket.on('receivedMessage', message => {
+                renderMessage(message)
+            })
+
+            form.addEventListener('submit', event => {
+                event.preventDefault()
+
+                const author = document.querySelector('input[name=username]').value
+                const message = document.querySelector('input[name=message]').value
+
+                if(author.length && message.length) {
+                    const messageObject = {
+                        author,
+                        message
+                    }
+
+                    renderMessage(messageObject)
+
+                    socket.emit('sendMessage', messageObject)
+                }
+            })
+        </script>
+    </body>
+</html>
